@@ -22,8 +22,6 @@ bin/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
-.vscode/
 
 ### Mac OS ###
 .DS_Store
@@ -34,7 +32,6 @@ bin/
 .vscode/
 
 # OS Files
-.DS_Store
 Thumbs.db
 
 # Build Files
