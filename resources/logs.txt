@@ -1,0 +1,14 @@
+Starting system configuration...
+Enter Total Tickets: 
+Enter Ticket Release Rate: 
+Enter Customer Retrieval Rate: 
+Enter Max Ticket Capacity: 
+System configured successfully.
+Enter command (start/stop): 
+Vendor finished releasing tickets.
+Customer retrieved: Initial-Ticket-1
+Customer retrieved: Initial-Ticket-2
+Customer finished retrieving tickets. No more tickets available.
+System terminated for current run.
+Do you want to continue? (yes/no): 
+System fully terminated.
