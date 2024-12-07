@@ -26,28 +26,28 @@ public class TicketPool {
 
         int initialTickets = Math.min(totalTickets, maxTicketCapacity);
         for (int i = 0; i < initialTickets; i++) {
-            tickets.add("Initial-Ticket-" + (i + 1));
+            int vendorId = (i % vendorCount) + 1; // Distribute tickets among vendors
+            tickets.add("Initial-Ticket-" + (i + 1) + " (Vendor-" + vendorId + ")");
         }
         this.totalTicketsAdded = initialTickets;
     }
 
+
     public void addTickets(String ticket, int vendorId) {
         lock.lock();
         try {
-            while (tickets.size() >= totalTickets || totalTicketsAdded >= maxTicketCapacity) {
-                try {
-                    canAddTickets.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+            while ((tickets.size() >= totalTickets || totalTicketsAdded >= maxTicketCapacity)
+                    && totalTicketsRetrieved < maxTicketCapacity) {
+                canAddTickets.await();
             }
 
-            if (totalTicketsAdded < maxTicketCapacity) {
+            if (totalTicketsAdded < maxTicketCapacity && totalTicketsRetrieved < maxTicketCapacity) {
                 tickets.add(ticket + " (Vendor-" + vendorId + ")");
                 totalTicketsAdded++;
                 notEmpty.signalAll();
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } finally {
             lock.unlock();
         }
@@ -110,11 +110,12 @@ public class TicketPool {
     public boolean isComplete() {
         lock.lock();
         try {
-            return vendorsFinished == vendorCount && tickets.isEmpty();
+            return (vendorsFinished == vendorCount || totalTicketsRetrieved >= maxTicketCapacity) && tickets.isEmpty();
         } finally {
             lock.unlock();
         }
     }
+
 
     public void setVendorFinished() {
         lock.lock();

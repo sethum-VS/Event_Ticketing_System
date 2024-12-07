@@ -63,6 +63,7 @@ public class Main {
 
         Thread customer = new Thread(new Customer(ticketPool));
 
+
         // Start all threads
         vendorThreads.forEach(Thread::start);
         customer.start();
