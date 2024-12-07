@@ -49,7 +49,7 @@ public class Main {
             config.setMaxTicketCapacity(config.getMaxTicketCapacity() + newMaxTicketCapacity);
 
             // Update the ticket pool for the new capacity
-            ticketPool.updateMaxTicketCapacity(config.getMaxTicketCapacity());
+            ticketPool.updateMaxTicketCapacity(newMaxTicketCapacity);
         }
 
         Logger.log("System fully terminated.");
