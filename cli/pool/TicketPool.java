@@ -13,14 +13,16 @@ public class TicketPool {
     private int totalTicketsRetrieved = 0;
     private int maxTicketCapacity;
     private final int totalTickets;
+    private final int vendorCount;
     private final Lock lock = new ReentrantLock();
     private final Condition notEmpty = lock.newCondition();
     private final Condition canAddTickets = lock.newCondition();
-    private boolean vendorFinished = false;
+    private int vendorsFinished = 0; // Track the number of finished vendors
 
-    public TicketPool(int totalTickets, int maxTicketCapacity) {
+    public TicketPool(int totalTickets, int maxTicketCapacity, int vendorCount) {
         this.totalTickets = totalTickets;
         this.maxTicketCapacity = maxTicketCapacity;
+        this.vendorCount = vendorCount;
 
         int initialTickets = Math.min(totalTickets, maxTicketCapacity);
         for (int i = 0; i < initialTickets; i++) {
@@ -29,10 +31,10 @@ public class TicketPool {
         this.totalTicketsAdded = initialTickets;
     }
 
-    public void addTickets(String ticket) {
+    public void addTickets(String ticket, int vendorId) {
         lock.lock();
         try {
-            while (tickets.size() >= totalTickets) {
+            while (tickets.size() >= totalTickets || totalTicketsAdded >= maxTicketCapacity) {
                 try {
                     canAddTickets.await();
                 } catch (InterruptedException e) {
@@ -42,7 +44,7 @@ public class TicketPool {
             }
 
             if (totalTicketsAdded < maxTicketCapacity) {
-                tickets.add(ticket);
+                tickets.add(ticket + " (Vendor-" + vendorId + ")");
                 totalTicketsAdded++;
                 notEmpty.signalAll();
             }
@@ -54,7 +56,7 @@ public class TicketPool {
     public String removeTicket() {
         lock.lock();
         try {
-            while (tickets.isEmpty() && !vendorFinished) {
+            while (tickets.isEmpty() && vendorsFinished < vendorCount) {
                 try {
                     notEmpty.await();
                 } catch (InterruptedException e) {
@@ -63,7 +65,7 @@ public class TicketPool {
                 }
             }
 
-            if (tickets.isEmpty() && vendorFinished) {
+            if (tickets.isEmpty() && vendorsFinished == vendorCount) {
                 return null;
             }
 
@@ -80,24 +82,11 @@ public class TicketPool {
         lock.lock();
         try {
             this.maxTicketCapacity = newMaxTicketCapacity;
-            vendorFinished = false; // Allow vendors to resume operations
+            vendorsFinished = 0; // Reset for the next run
             notEmpty.signalAll();
         } finally {
             lock.unlock();
         }
-    }
-
-    public int getCurrentPoolSize() {
-        lock.lock();
-        try {
-            return tickets.size();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public int getTotalTickets() {
-        return totalTickets; // Return the total tickets allowed at any given time
     }
 
     public int getTotalTicketsAdded() {
@@ -110,14 +99,9 @@ public class TicketPool {
     }
 
     public int getMaxTicketCapacity() {
-        return maxTicketCapacity;
-    }
-
-    public void setVendorFinished() {
         lock.lock();
         try {
-            vendorFinished = true;
-            notEmpty.signalAll();
+            return maxTicketCapacity;
         } finally {
             lock.unlock();
         }
@@ -126,7 +110,19 @@ public class TicketPool {
     public boolean isComplete() {
         lock.lock();
         try {
-            return vendorFinished && totalTicketsRetrieved >= totalTicketsAdded;
+            return vendorsFinished == vendorCount && tickets.isEmpty();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void setVendorFinished() {
+        lock.lock();
+        try {
+            vendorsFinished++;
+            if (vendorsFinished == vendorCount) {
+                notEmpty.signalAll(); // Notify customers that no more tickets will be added
+            }
         } finally {
             lock.unlock();
         }

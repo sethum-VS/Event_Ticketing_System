@@ -7,6 +7,8 @@ import threads.Customer;
 import threads.Vendor;
 import ui.CommandLineInterface;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -15,7 +17,10 @@ public class Main {
 
         // Configure the system
         Configuration config = CommandLineInterface.configureSystem();
-        TicketPool ticketPool = new TicketPool(config.getTotalTickets(), config.getMaxTicketCapacity());
+        Logger.log("Enter Number of Vendors: ");
+        int vendorCount = Integer.parseInt(scanner.nextLine());
+
+        TicketPool ticketPool = new TicketPool(config.getTotalTickets(), config.getMaxTicketCapacity(), vendorCount);
 
         while (true) {
             Logger.log("Enter command (start/stop): ");
@@ -25,7 +30,7 @@ public class Main {
                 Logger.log("System stopped by user command.");
                 break;
             } else if (command.equalsIgnoreCase("start")) {
-                runSystem(ticketPool, config);
+                runSystem(ticketPool, config, vendorCount);
             } else {
                 Logger.log("Invalid command. Please enter 'start' or 'stop'.");
             }
@@ -41,10 +46,7 @@ public class Main {
             // Update Max Ticket Capacity
             Logger.log("Enter new Max Ticket Capacity: ");
             int newMaxTicketCapacity = Integer.parseInt(scanner.nextLine());
-
-            // Treat the new capacity as an increment to the existing capacity
-            int incrementCapacity = newMaxTicketCapacity;
-            config.setMaxTicketCapacity(config.getMaxTicketCapacity() + incrementCapacity);
+            config.setMaxTicketCapacity(config.getMaxTicketCapacity() + newMaxTicketCapacity);
 
             // Update the ticket pool for the new capacity
             ticketPool.updateMaxTicketCapacity(config.getMaxTicketCapacity());
@@ -53,18 +55,23 @@ public class Main {
         Logger.log("System fully terminated.");
     }
 
-    private static void runSystem(TicketPool ticketPool, Configuration config) {
-        // Initialize Vendor and Customer threads
-        Thread vendor = new Thread(new Vendor(ticketPool, config.getTicketReleaseRate()));
+    private static void runSystem(TicketPool ticketPool, Configuration config, int vendorCount) {
+        List<Thread> vendorThreads = new ArrayList<>();
+        for (int i = 1; i <= vendorCount; i++) {
+            vendorThreads.add(new Thread(new Vendor(ticketPool, config.getTicketReleaseRate(), i)));
+        }
+
         Thread customer = new Thread(new Customer(ticketPool));
 
-        // Start threads
-        vendor.start();
+        // Start all threads
+        vendorThreads.forEach(Thread::start);
         customer.start();
 
         // Wait for threads to complete
         try {
-            vendor.join();
+            for (Thread vendorThread : vendorThreads) {
+                vendorThread.join();
+            }
             customer.join();
         } catch (InterruptedException e) {
             Logger.error("Main thread interrupted.");
