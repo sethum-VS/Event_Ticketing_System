@@ -22,7 +22,7 @@ public class Vendor implements Runnable {
                 if (ticketPool.getTotalTicketsAdded() >= ticketPool.getMaxTicketCapacity()) {
                     Logger.log("Vendor " + vendorId + " finished adding tickets.");
                     ticketPool.setVendorFinished();
-                    return;
+                    return; // Stop adding tickets once max capacity is reached
                 }
 
                 String ticket = "Ticket-" + ticketNumber++;
@@ -40,6 +40,6 @@ public class Vendor implements Runnable {
         }
 
         Logger.log("Vendor " + vendorId + " finished adding tickets.");
-        ticketPool.setVendorFinished(); // Signal end of ticket addition
+        ticketPool.setVendorFinished();
     }
 }

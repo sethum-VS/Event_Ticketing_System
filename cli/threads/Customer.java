@@ -19,7 +19,7 @@ public class Customer implements Runnable {
                 Logger.log("Customer retrieved: " + ticket);
             } else if (ticketPool.isComplete()) {
                 Logger.log("Customer finished retrieving tickets. No more tickets available.");
-                break;
+                break; // Exit loop when all tickets are retrieved, and vendors are finished
             }
 
             try {

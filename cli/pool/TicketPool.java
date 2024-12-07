@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class TicketPool {
     private final List<String> tickets = Collections.synchronizedList(new LinkedList<>());
-    private int totalTicketsAdded;
+    private int totalTicketsAdded = 0;
     private int totalTicketsRetrieved = 0;
     private int maxTicketCapacity;
     private final int totalTickets;
@@ -17,7 +17,7 @@ public class TicketPool {
     private final Lock lock = new ReentrantLock();
     private final Condition notEmpty = lock.newCondition();
     private final Condition canAddTickets = lock.newCondition();
-    private int vendorsFinished = 0; // Track the number of finished vendors
+    private int vendorsFinished = 0;
 
     public TicketPool(int totalTickets, int maxTicketCapacity, int vendorCount) {
         this.totalTickets = totalTickets;
