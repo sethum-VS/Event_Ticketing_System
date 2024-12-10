@@ -10,6 +10,9 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MongoDBUtility {
 
@@ -39,7 +42,6 @@ public class MongoDBUtility {
                     .append("maxTicketCapacity", config.getMaxTicketCapacity())
                     .append("createdAt", LocalDateTime.now().toString());
             configurationCollection.insertOne(document);
-            Logger.log("Configuration saved successfully with ID: " + document.getObjectId("_id").toString());
             return document.getObjectId("_id").toString();
         } catch (Exception e) {
             Logger.error("Error saving configuration: " + e.getMessage());
@@ -65,4 +67,14 @@ public class MongoDBUtility {
             return null;
         }
     }
+
+    public List<Document> getAllConfigurations() {
+        try {
+            return configurationCollection.find().into(new ArrayList<>());
+        } catch (Exception e) {
+            Logger.error("Error retrieving configurations: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
 }

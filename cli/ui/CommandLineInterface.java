@@ -3,7 +3,9 @@ package ui;
 import config.Configuration;
 import logging.Logger;
 import db.MongoDBUtility;
+import org.bson.Document;
 
+import java.util.List;
 import java.util.Scanner;
 
 public class CommandLineInterface {
@@ -15,14 +17,29 @@ public class CommandLineInterface {
         String choice = scanner.nextLine().trim();
 
         if (choice.equalsIgnoreCase("yes")) {
-            Logger.log("Enter Configuration ID: ");
-            String configId = scanner.nextLine().trim();
-            Configuration loadedConfig = dbUtility.getConfigurationById(configId);
-            if (loadedConfig != null) {
+            List<Document> configurations = dbUtility.getAllConfigurations();
+            if (configurations.isEmpty()) {
+                Logger.log("No saved configurations found. Proceeding with new configuration.");
+            } else {
+                Logger.log("Saved Configurations:");
+                for (int i = 0; i < configurations.size(); i++) {
+                    Document config = configurations.get(i);
+                    String createdAt = config.getString("createdAt");
+                    String id = config.getObjectId("_id").toString();
+                    Logger.log((i + 1) + ". Date: " + createdAt + ", Config ID: " + id);
+                }
+
+                int selectedConfig = getValidatedInput(scanner, "Select a configuration by number: ", "Examples: 1, 2", 1, configurations.size());
+                Document selectedDocument = configurations.get(selectedConfig - 1);
+                Logger.log("Loading configuration...");
+                Configuration loadedConfig = new Configuration(
+                        selectedDocument.getInteger("totalTickets"),
+                        selectedDocument.getInteger("ticketReleaseRate"),
+                        selectedDocument.getInteger("customerRetrievalRate"),
+                        selectedDocument.getInteger("maxTicketCapacity")
+                );
                 Logger.log("Configuration loaded successfully.");
                 return loadedConfig;
-            } else {
-                Logger.log("Failed to load configuration. Proceeding with new configuration.");
             }
         }
 
@@ -40,6 +57,7 @@ public class CommandLineInterface {
         Logger.log("System configured successfully.");
         return config;
     }
+
 
     private static int getValidatedInput(Scanner scanner, String prompt, String examples, int minValue, int maxValue) {
         while (true) {
