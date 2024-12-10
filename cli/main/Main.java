@@ -19,6 +19,8 @@ public class Main {
         Configuration config = CommandLineInterface.configureSystem();
         Logger.log("Enter Number of Vendors: ");
         int vendorCount = Integer.parseInt(scanner.nextLine());
+        Logger.log("Enter Number of Customers: ");
+        int customerCount = Integer.parseInt(scanner.nextLine());
 
         TicketPool ticketPool = new TicketPool(config.getTotalTickets(), config.getMaxTicketCapacity(), vendorCount);
 
@@ -30,7 +32,7 @@ public class Main {
                 Logger.log("System stopped by user command.");
                 break;
             } else if (command.equalsIgnoreCase("start")) {
-                runSystem(ticketPool, config, vendorCount);
+                runSystem(ticketPool, config, vendorCount, customerCount);
             } else {
                 Logger.log("Invalid command. Please enter 'start' or 'stop'.");
             }
@@ -55,25 +57,31 @@ public class Main {
         Logger.log("System fully terminated.");
     }
 
-    private static void runSystem(TicketPool ticketPool, Configuration config, int vendorCount) {
+    private static void runSystem(TicketPool ticketPool, Configuration config, int vendorCount, int customerCount) {
         List<Thread> vendorThreads = new ArrayList<>();
         for (int i = 1; i <= vendorCount; i++) {
             vendorThreads.add(new Thread(new Vendor(ticketPool, config.getTicketReleaseRate(), i)));
         }
 
-        Thread customer = new Thread(new Customer(ticketPool));
-
+        List<Thread> customerThreads = new ArrayList<>();
+        for (int i = 1; i <= customerCount; i++) {
+            customerThreads.add(new Thread(new Customer(ticketPool, config.getCustomerRetrievalRate(), i)));
+        }
 
         // Start all threads
         vendorThreads.forEach(Thread::start);
-        customer.start();
+        customerThreads.forEach(Thread::start);
 
-        // Wait for threads to complete
+        // Wait for vendor threads to complete
         try {
             for (Thread vendorThread : vendorThreads) {
                 vendorThread.join();
             }
-            customer.join();
+
+            // Wait for customer threads to complete
+            for (Thread customerThread : customerThreads) {
+                customerThread.join();
+            }
         } catch (InterruptedException e) {
             Logger.error("Main thread interrupted.");
             Thread.currentThread().interrupt();

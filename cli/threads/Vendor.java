@@ -40,7 +40,7 @@ public class Vendor implements Runnable {
 
             // Sleep to simulate ticket release delay
             try {
-                Thread.sleep(500);
+                Thread.sleep(ticketReleaseRate);
             } catch (InterruptedException e) {
                 Logger.error("Vendor " + vendorId + " interrupted.");
                 Thread.currentThread().interrupt();

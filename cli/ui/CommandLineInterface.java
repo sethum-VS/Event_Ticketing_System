@@ -11,12 +11,12 @@ public class CommandLineInterface {
 
         Logger.log("Starting system configuration...");
         int totalTickets = getInput(scanner, "Enter Total Tickets: ");
-        int ticketReleaseRate = getInput(scanner, "Enter Ticket Release Rate: ");
-        int customerRetrievalRate = getInput(scanner, "Enter Customer Retrieval Rate: ");
+        int ticketReleaseInterval = getInput(scanner, "Enter Ticket Release Interval (milliseconds): ");
+        int customerRetrievalInterval = getInput(scanner, "Enter Customer Retrieval Interval (milliseconds): ");
         int maxTicketCapacity = getInput(scanner, "Enter Max Ticket Capacity: ");
 
         Logger.log("System configured successfully.");
-        return new Configuration(totalTickets, ticketReleaseRate, customerRetrievalRate, maxTicketCapacity);
+        return new Configuration(totalTickets, ticketReleaseInterval, customerRetrievalInterval, maxTicketCapacity);
     }
 
     private static int getInput(Scanner scanner, String prompt) {

@@ -5,9 +5,13 @@ import logging.Logger;
 
 public class Customer implements Runnable {
     private final TicketPool ticketPool;
+    private final int customerRetrievalInterval; // Time-based interval
+    private final int customerId;
 
-    public Customer(TicketPool ticketPool) {
+    public Customer(TicketPool ticketPool, int customerRetrievalInterval, int customerId) {
         this.ticketPool = ticketPool;
+        this.customerRetrievalInterval = customerRetrievalInterval;
+        this.customerId = customerId;
     }
 
     @Override
@@ -16,16 +20,16 @@ public class Customer implements Runnable {
             String ticket = ticketPool.removeTicket();
 
             if (ticket != null) {
-                Logger.log("Customer retrieved: " + ticket);
+                Logger.log("Customer " + customerId + " retrieved: " + ticket);
             } else if (ticketPool.isComplete()) {
-                Logger.log("Customer finished retrieving tickets. No more tickets available.");
-                break; // Exit loop when all tickets are retrieved, and vendors are finished
+                Logger.log("Customer " + customerId + " finished retrieving tickets. No more tickets available.");
+                break;
             }
 
             try {
-                Thread.sleep(500); // Simulate delay in ticket retrieval
+                Thread.sleep(customerRetrievalInterval); // Sleep based on interval
             } catch (InterruptedException e) {
-                Logger.error("Customer interrupted.");
+                Logger.error("Customer " + customerId + " interrupted.");
                 Thread.currentThread().interrupt();
                 return;
             }
