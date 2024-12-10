@@ -17,24 +17,19 @@ public class Main {
 
         // Configure the system
         Configuration config = CommandLineInterface.configureSystem();
-        Logger.log("Enter Number of Vendors: ");
-        int vendorCount = Integer.parseInt(scanner.nextLine());
-        Logger.log("Enter Number of Customers: ");
-        int customerCount = Integer.parseInt(scanner.nextLine());
+        int vendorCount = getValidatedInput(scanner, "Enter Number of Vendors (positive integer): ", "Examples: 1, 2, 10", 1, Integer.MAX_VALUE);
+        int customerCount = getValidatedInput(scanner, "Enter Number of Customers (positive integer): ", "Examples: 1, 5, 20", 1, Integer.MAX_VALUE);
 
         TicketPool ticketPool = new TicketPool(config.getTotalTickets(), config.getMaxTicketCapacity(), vendorCount);
 
         while (true) {
-            Logger.log("Enter command (start/stop): ");
-            String command = scanner.nextLine();
+            String command = getValidatedCommand(scanner, "Enter command (start/stop): ", "Invalid command. Please enter 'start' or 'stop'.");
 
             if (command.equalsIgnoreCase("stop")) {
                 Logger.log("System stopped by user command.");
                 break;
             } else if (command.equalsIgnoreCase("start")) {
                 runSystem(ticketPool, config, vendorCount, customerCount);
-            } else {
-                Logger.log("Invalid command. Please enter 'start' or 'stop'.");
             }
 
             // Ask if the user wants to continue
@@ -43,18 +38,45 @@ public class Main {
 
             if (continueCommand.equalsIgnoreCase("no")) {
                 break;
+            } else if (continueCommand.equalsIgnoreCase("yes")) {
+                int newMaxTicketCapacity = getValidatedInput(scanner, "Enter new Max Ticket Capacity (greater than current capacity): ",
+                        "Examples: 50, 100", config.getMaxTicketCapacity() + 1, Integer.MAX_VALUE);
+                config.setMaxTicketCapacity(newMaxTicketCapacity);
+                ticketPool.updateMaxTicketCapacity(newMaxTicketCapacity);
+            } else {
+                Logger.log("Invalid response. Please enter 'yes' or 'no'.");
             }
-
-            // Update Max Ticket Capacity
-            Logger.log("Enter new Max Ticket Capacity: ");
-            int newMaxTicketCapacity = Integer.parseInt(scanner.nextLine());
-            config.setMaxTicketCapacity(config.getMaxTicketCapacity() + newMaxTicketCapacity);
-
-            // Update the ticket pool for the new capacity
-            ticketPool.updateMaxTicketCapacity(newMaxTicketCapacity);
         }
 
         Logger.log("System fully terminated.");
+    }
+
+    private static String getValidatedCommand(Scanner scanner, String prompt, String errorMessage) {
+        while (true) {
+            Logger.log(prompt);
+            String command = scanner.nextLine().trim();
+            if (command.equalsIgnoreCase("start") || command.equalsIgnoreCase("stop")) {
+                return command;
+            } else {
+                Logger.log(errorMessage);
+            }
+        }
+    }
+
+    private static int getValidatedInput(Scanner scanner, String prompt, String examples, int minValue, int maxValue) {
+        while (true) {
+            Logger.log(prompt + " " + examples);
+            try {
+                int value = Integer.parseInt(scanner.nextLine());
+                if (value >= minValue && value <= maxValue) {
+                    return value;
+                } else {
+                    Logger.log("Input must be between " + minValue + " and " + maxValue + ". Try again.");
+                }
+            } catch (NumberFormatException e) {
+                Logger.log("Invalid input. Please enter a valid number. " + examples);
+            }
+        }
     }
 
     private static void runSystem(TicketPool ticketPool, Configuration config, int vendorCount, int customerCount) {
@@ -68,17 +90,13 @@ public class Main {
             customerThreads.add(new Thread(new Customer(ticketPool, config.getCustomerRetrievalRate(), i)));
         }
 
-        // Start all threads
         vendorThreads.forEach(Thread::start);
         customerThreads.forEach(Thread::start);
 
-        // Wait for vendor threads to complete
         try {
             for (Thread vendorThread : vendorThreads) {
                 vendorThread.join();
             }
-
-            // Wait for customer threads to complete
             for (Thread customerThread : customerThreads) {
                 customerThread.join();
             }
