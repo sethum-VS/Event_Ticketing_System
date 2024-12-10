@@ -27,7 +27,7 @@ public class TicketPool {
         int initialTickets = Math.min(totalTickets, maxTicketCapacity);
         for (int i = 0; i < initialTickets; i++) {
             int vendorId = (i % vendorCount) + 1; // Distribute tickets among vendors
-            tickets.add("Initial-Ticket-" + (i + 1) + " (Vendor-" + vendorId + ")");
+            tickets.add("Initial-Ticket- no " + (i + 1) + " (Vendor-" + vendorId + ")");
         }
         this.totalTicketsAdded = initialTickets;
     }
@@ -89,6 +89,15 @@ public class TicketPool {
         }
     }
 
+    public int getTotalTicketsRetrieved() {
+        lock.lock();
+        try {
+            return totalTicketsRetrieved;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public int getTotalTicketsAdded() {
         lock.lock();
         try {
@@ -97,6 +106,7 @@ public class TicketPool {
             lock.unlock();
         }
     }
+
 
     public int getMaxTicketCapacity() {
         lock.lock();

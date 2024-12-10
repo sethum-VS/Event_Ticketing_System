@@ -16,30 +16,37 @@ public class Vendor implements Runnable {
 
     @Override
     public void run() {
-        int ticketNumber = 1;
-        while (ticketPool.getTotalTicketsAdded() < ticketPool.getMaxTicketCapacity()) {
-            for (int i = 0; i < ticketReleaseRate; i++) {
-                if (ticketPool.getTotalTicketsAdded() >= ticketPool.getMaxTicketCapacity()) {
-                    Logger.log("Vendor " + vendorId + " finished adding tickets.");
-                    ticketPool.setVendorFinished();
-                    return;
+        while (true) {
+            // Lock the pool to perform atomic operations
+            synchronized (ticketPool) {
+                // Check if tickets sold have reached the lifecycle limit
+                if (ticketPool.getTotalTicketsRetrieved() >= ticketPool.getMaxTicketCapacity()) {
+                    Logger.log("Vendor " + vendorId + " detected max lifecycle limit reached. Stopping.");
+                    ticketPool.setVendorFinished(); // Mark this vendor as finished
+                    return; // Exit the loop
                 }
 
-                String ticket = "Ticket-" + ticketNumber++;
-                ticketPool.addTickets(ticket, vendorId);
-                Logger.log("Vendor " + vendorId + " added: " + ticket);
-
-                try {
-                    Thread.sleep(500); // Simulate delay in ticket release
-                } catch (InterruptedException e) {
-                    Logger.error("Vendor " + vendorId + " interrupted.");
-                    Thread.currentThread().interrupt();
-                    return;
+                // Check if tickets can be added
+                if (ticketPool.getTotalTicketsAdded() < ticketPool.getMaxTicketCapacity()) {
+                    String ticket = "Ticket" + "- no " + (ticketPool.getTotalTicketsAdded() + 1);
+                    ticketPool.addTickets(ticket, vendorId);
+                    Logger.log("Vendor " + vendorId + " added: " + ticket);
+                } else {
+                    Logger.log("Vendor " + vendorId + " cannot add more tickets. Max capacity reached.");
+                    ticketPool.setVendorFinished(); // Mark this vendor as finished
+                    return; // Exit the loop
                 }
             }
-        }
 
-        Logger.log("Vendor " + vendorId + " finished adding tickets.");
-        ticketPool.setVendorFinished();
+            // Sleep to simulate ticket release delay
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Logger.error("Vendor " + vendorId + " interrupted.");
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
     }
+
 }
