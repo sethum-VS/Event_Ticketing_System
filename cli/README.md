@@ -14,7 +14,7 @@ This directory contains the Command-Line Interface (CLI) implementation for the 
     - Displays real-time transaction details in the console.
 
 3. **API Communication**:
-    - Uses **OkHttp** for making REST API calls to the backend for:
+    - Uses REST API calls to the backend for:
         - Saving configurations.
         - Triggering simulations.
 
